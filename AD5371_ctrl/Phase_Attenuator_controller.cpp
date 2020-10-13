@@ -59,7 +59,7 @@ int Phase_Attenuator_controller::load_cal_data(void){
   std::cout << "Reading calibration data.....";
   for(int power_idx = 0;  power_idx < POWER_num; power_idx++){
     for(int i = 0; i<ANT_num; i++){
-      std::string filename = "calibration_data/ant" + std::to_string(i) +
+      std::string filename = "../misc/calibration_data/ant" + std::to_string(i) +
         "_" + POWER_PRESET[power_idx] + "dB" + 
         "_cal_data";
       io::CSVReader<4> csv_reader(filename);
