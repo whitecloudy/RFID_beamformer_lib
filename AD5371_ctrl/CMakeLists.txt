@@ -14,6 +14,8 @@ list(APPEND AD5371_CTRL_LINKS
   pthread
   )
 
-
 add_library(AD5371_CTRL_LIB STATIC ${AD5371_CTRL_SOURCES})
 target_link_libraries(AD5371_CTRL_LIB ${AD5371_CTRL_LINKS})
+
+add_executable(fixed_beam Fixed_beam.cpp)
+target_link_libraries(fixed_beam AD5371_CTRL_LIB)
