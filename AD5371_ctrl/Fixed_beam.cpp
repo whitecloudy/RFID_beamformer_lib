@@ -25,6 +25,8 @@ int main(int argc, char * argv[]){
         pa_control.phase_control(ant_num, power, phase);
     }
 
+    pa_control.data_apply();
+    std::cout << "Waiting"<<std::endl;
     char for_waiting[128];
     std::cin >> for_waiting;
 

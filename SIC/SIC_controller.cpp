@@ -1,6 +1,7 @@
 #include "SIC_controller.hpp"
 #include <cmath>
 #include <algorithm>
+#include <complex>
 
 #define PI (3.1415926535897)
 #define Deg2Rad(_num) (float)(_num * (PI / 180))
@@ -40,6 +41,7 @@ int SIC_controller::setCurrentAmp(std::complex<float> amp_Rx){
 
 #ifdef  _SIC_DEBUG_
   std::cout<<"weight_true : "<<weight_new<<std::endl;
+  std::cout<<"phase : "<<Rad2Deg(std::arg(weight_cur))<<std::endl;
   std::cout<<"true dB : "<<Amp2dB(std::abs(weight_new))<<std::endl;
   std::cout<<"Expected : "<<amp_Ant + weight_new*SIC_cha<<std::endl;
 #endif
