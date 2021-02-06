@@ -26,7 +26,7 @@
 #define Group3_ALL_vout_num -5
 #define Group4_ALL_vout_num -6
 
-#define OFFSET_FILE_name "offset_saved_file.csv" //name of csv file
+#define OFFSET_FILE_name "../misc/offset_saved_file.csv" //name of csv file
 
 enum offset_types {Group0_offset = 0, Group1_offset, Group234_offset, Vout_offset, Vout_gain};
 
