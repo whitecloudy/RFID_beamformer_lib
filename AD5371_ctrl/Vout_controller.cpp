@@ -224,6 +224,7 @@ int Vout_controller::offset_modify(offset_types offset_num, int vout_function, i
 
 int Vout_controller::voltage_modify_bin(int vout_num, int code){
   int mode_bits = 3;
+
   
   serial_word_maker(mode_bits, address_maker(vout_num), code);
   int result = data_sender();

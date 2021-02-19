@@ -48,7 +48,7 @@ SPI_communicator::~SPI_communicator(){
 
 
 int SPI_communicator::transmit_cmd(const unsigned char * spi_bytes){
-  memcpy(&buf[buf_count*FRAME_SIZE],spi_bytes,3);
+  memcpy(&(buf[buf_count*FRAME_SIZE]),spi_bytes,3);
   buf_count++;
 
 //  int result = sendto(sockfd, buffer, 4, MSG_CONFIRM, (const struct sockaddr *)&servaddr, sizeof(servaddr)); 

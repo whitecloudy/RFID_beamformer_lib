@@ -13,8 +13,8 @@
 #include "Controller_Global.h"
 
 
-#define MAXIMUM_DATA 256
-#define FRAME_SIZE 3
+#define MAXIMUM_DATA (4092)
+#define FRAME_SIZE (3)
 
 
 /*
