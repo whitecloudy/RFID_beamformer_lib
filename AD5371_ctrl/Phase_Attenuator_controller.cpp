@@ -57,27 +57,79 @@ int Phase_Attenuator_controller::load_cal_data(void){
   //loading the calibration data
   
   std::cout << "Reading calibration data.....";
-  for(int power_idx = 0;  power_idx < POWER_num; power_idx++){
-    for(int i = 0; i<ANT_num; i++){
-      std::string filename = "../misc/calibration_data/ant" + std::to_string(i) +
-        "_" + POWER_PRESET[power_idx] + "dB" + 
-        "_cal_data";
-      io::CSVReader<4> csv_reader(filename);
+  for(int i = 0; i<ANT_num; i++){
+    std::string filename = "../misc/calibration_data/ant" + std::to_string(i) + ".csv";
+    io::CSVReader<4> csv_reader(filename);
 
+    double ph_V, po_V, real, imag;
 
-      float ph_V, po_V, phase, power;
-      while(csv_reader.read_row(phase, power, ph_V, po_V)){
-        struct cal_ref v_data;
-        v_data.phase = std::polar(1.0f, Deg2Rad(phase));
-        v_data.power = power;
-        v_data.ph_V = ph_V;
-        v_data.po_V = po_V;
+    csv_reader.read_header(io::ignore_extra_column, "Phase(V)", "Attenuator(V)", "real", "imag");
 
-        V_preset[i][power_idx].push_back(v_data);
+    std::vector<struct cal_ref> cal_data;
+    while(csv_reader.read_row(ph_V, po_V, real, imag)){
+      struct cal_ref v_data;
+      v_data.signal = std::complex<double>(real,imag);
+      v_data.phase = v_data.signal/std::abs(v_data.signal);
+      v_data.power = std::norm(v_data.signal);
+      v_data.ph_V = ph_V;
+      v_data.po_V = po_V;
+
+      cal_data.push_back(v_data);
+    }
+
+    fill_V_preset(i, cal_data);
+  }
+
+  std::cout << "Done"<<std::endl;
+
+  return 0;
+}
+
+int Phase_Attenuator_controller::fill_V_preset(int ant_num, std::vector<struct cal_ref> cal_data)
+{
+  std::vector<struct cal_ref> phase_shifter, attenuator;
+
+  int cal_len = cal_data.size()/2;
+
+  for(int i = 0; i < cal_len; i++)
+  {
+    phase_shifter.push_back(cal_data[i]);
+    cal_data[i + cal_len].signal /= phase_shifter[0].signal;
+    attenuator.push_back(cal_data[i + cal_len]);
+  }
+
+  for(int power_idx = dB2idx(MIN_POWER); power_idx <= dB2idx(MAX_POWER); power_idx++)
+  {
+    double target_power = std::pow(10, idx2dB(power_idx)/10);
+    for(int ph_idx = 0; ph_idx < cal_len; ph_idx++)
+    {
+      std::complex<double> phase_signal = phase_shifter[ph_idx].signal;
+
+      int best_at_idx = 0;
+      double best_power = 99999999.0;
+
+      int at_idx = 0;
+      for(int at_idx = 0; at_idx < cal_len; at_idx++)
+      {
+        double cur_power = std::abs(std::norm(phase_signal * attenuator[at_idx].signal) - target_power);
+        if(best_power > cur_power)
+        {
+          best_power = cur_power;
+          best_at_idx = at_idx;
+        }
       }
+      
+
+      struct cal_ref v_data;
+      v_data.signal = phase_signal * attenuator[best_at_idx].signal;
+      v_data.phase = v_data.signal/std::abs(v_data.signal);
+      v_data.power = std::norm(v_data.signal);
+      v_data.ph_V = phase_shifter[ph_idx].ph_V;
+      v_data.po_V = attenuator[best_at_idx].po_V;
+      V_preset[ant_num][power_idx].push_back(v_data);
+
     }
   }
-  std::cout << "Done"<<std::endl;
 
   return 0;
 }
@@ -85,7 +137,7 @@ int Phase_Attenuator_controller::load_cal_data(void){
 
 int preset_finder(std::vector<struct cal_ref> V_preset, float phase){
   int vec_len = V_preset.size();  
-  std::complex<float> phase_com = std::polar(1.0f, Deg2Rad(phase));
+  std::complex<double> phase_com = std::polar(1.0f, Deg2Rad(phase));
 
   int min_idx = 0;
   double min_value = 999999.9;
