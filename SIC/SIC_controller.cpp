@@ -33,7 +33,7 @@ int SIC_controller::setCurrentAmp(std::complex<float> amp_Rx){
 
 
   float truedB = Amp2dB(std::abs(weight_new));
-  float realdB = std::max(std::min(round(truedB*2)/2 - 0.5, _MAXdB),_MINdB);
+  float realdB = std::max(std::min(round(truedB*4)/4 - 0.5, _MAXdB),_MINdB);
 
   weight_new = weight_new / std::abs(weight_new) * (float)dB2Amp(realdB);
 
