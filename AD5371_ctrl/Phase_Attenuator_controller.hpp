@@ -36,16 +36,24 @@ class Phase_Attenuator_controller{
     int index_V_preset[ANT_num][POWER_num][360];
 
   private:
+    bool read_cal_ref_file(std::vector<struct cal_ref>&, std::string);
+    bool write_cal_ref_file(std::vector<struct cal_ref>&, std::string);
+
+
     Vout_controller V;
     int load_cal_data(void);
     int fill_V_preset(int, std::vector<struct cal_ref>);
     int find_matched_preset(int, int, float);
-    int set_integer_index(void);
+    int set_integer_index(int);
 
     int voltage_index_search(int, int, int);
     int voltage_index_search(int, int, float);
     int phase_setup(int, int, int);
     int init(void);
+
+    bool load_cache(int, std::string, int);
+    bool save_cache(int, std::string);
+
 
   public:
     Phase_Attenuator_controller(void);

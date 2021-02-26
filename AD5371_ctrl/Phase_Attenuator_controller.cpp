@@ -1,6 +1,9 @@
 #include "Phase_Attenuator_controller.hpp"
+#include "lib/hash-library/sha256.h"
 #include <string>
 #include <cmath>
+#include <fstream>
+#include <cstring>
 
 
 enum VOUTNUM
@@ -39,6 +42,8 @@ enum VOUTNUM
   ANT16_attenuator = 32
 };
 
+#define MISC_DIR (std::string("../misc/"))
+
 
 #define PI (3.1415926535897)
 
@@ -50,19 +55,25 @@ const char ATTENUATOR[] = {ANT1_attenuator, ANT2_attenuator, ANT3_attenuator, AN
 
 //#define __DEBUG__
 
-int Phase_Attenuator_controller::load_cal_data(void){
-  //loading the calibration data
-  
-  std::cout << "Reading calibration data.....";
-  for(int i = 0; i<ANT_num; i++){
-    std::string filename = "../misc/calibration_data/ant" + std::to_string(i) + ".csv";
-    io::CSVReader<4> csv_reader(filename);
+bool Phase_Attenuator_controller::read_cal_ref_file(std::vector<struct cal_ref>& cal_data, std::string filename)
+{
+  std::ifstream file(filename);
 
-    double ph_V, po_V, real, imag;
+  if(file.fail())
+  {
+    file.close();
+    return false;
+  }else
+  {
+    //we close it immediately because we just opened only for file exists check
+    file.close();
+
+    io::CSVReader<4> csv_reader(filename);
 
     csv_reader.read_header(io::ignore_extra_column, "Phase(V)", "Attenuator(V)", "real", "imag");
 
-    std::vector<struct cal_ref> cal_data;
+    double ph_V, po_V, real, imag;
+
     while(csv_reader.read_row(ph_V, po_V, real, imag)){
       struct cal_ref v_data;
       v_data.signal = std::complex<double>(real,imag);
@@ -74,7 +85,133 @@ int Phase_Attenuator_controller::load_cal_data(void){
       cal_data.push_back(v_data);
     }
 
-    fill_V_preset(i, cal_data);
+    return true;
+  }
+  return true;
+}
+
+bool Phase_Attenuator_controller::write_cal_ref_file(std::vector<struct cal_ref>& cal_data, std::string filename)
+{
+  std::ofstream file(filename);
+
+  if(file.fail())
+  {
+    std::cerr<<"Saving Cache failed" <<std::endl;
+    file.close();
+    return false;
+  }else
+  {
+    file << "Phase(V), Attenuator(V), real, imag"<<std::endl;
+    for(unsigned int i = 0; i < cal_data.size() ; i++)
+    {
+      file << cal_data[i].ph_V << ", "<< cal_data[i].po_V << ", " << cal_data[i].signal.real() << ", " << cal_data[i].signal.imag() << std::endl;
+    }
+    return true;
+  }
+}
+
+bool Phase_Attenuator_controller::load_cache(int ant, std::string filename, int expected_preset_len)
+{
+  filename = MISC_DIR +"."+ filename;
+  std::vector<struct cal_ref> cal_data;
+
+  if(read_cal_ref_file(cal_data, filename))
+  {
+    int preset_length = (cal_data.size())/POWER_num;
+    if(expected_preset_len != preset_length)
+      return false;
+
+    for(int power_idx= 0; power_idx < POWER_num; power_idx++)
+    {
+      V_preset[ant][power_idx].reserve(preset_length);
+      for(int i = 0; i < preset_length; i++)
+      {
+        V_preset[ant][power_idx].push_back(cal_data[power_idx*preset_length + i]);
+      }
+    }
+  }else
+    return false;
+
+  std::ifstream index_file(filename+"_index");
+
+  if(index_file.fail())
+    return false;
+  else
+  {
+    for(int power_idx = 0; power_idx < POWER_num; power_idx++)
+    {
+      int index = 0;
+      for(int phase_idx = 0; phase_idx < 360; phase_idx++)
+      {
+        index_file >> index;
+        index_V_preset[ant][power_idx][phase_idx] = index;
+      }
+    }
+  }
+
+  index_file.close();
+
+  return true;
+}
+
+bool Phase_Attenuator_controller::save_cache(int ant, std::string filename)
+{
+  filename = MISC_DIR +"."+ filename;
+
+  int preset_length = V_preset[ant][0].size();
+  std::vector<struct cal_ref> merged_data(preset_length * POWER_num);
+
+  for(int i = 0; i < POWER_num; i++)
+  {
+    memcpy(merged_data.data() + preset_length*i, V_preset[ant][i].data(), sizeof(struct cal_ref)*V_preset[ant][i].size());
+  }
+
+  write_cal_ref_file(merged_data, filename);
+
+  std::ofstream index_file(filename + "_index");
+
+  if(index_file.fail())
+    return false;
+  else
+  {
+    for(int power_idx = 0; power_idx < POWER_num; power_idx++)
+    {
+      for(int phase_idx = 0; phase_idx < 360; phase_idx++)
+      {
+        index_file << index_V_preset[ant][power_idx][phase_idx] << std::endl;
+      }
+    }
+  }
+
+  index_file.close();
+
+  return 0;
+}
+
+
+
+int Phase_Attenuator_controller::load_cal_data(void){
+  //loading the calibration data
+
+  std::cout << "Reading calibration data.....";
+  for(int i = 0; i<ANT_num; i++){
+    std::string filename = MISC_DIR + "calibration_data/ant" + std::to_string(i) + ".csv";
+    std::vector<struct cal_ref> cal_data;
+
+    read_cal_ref_file(cal_data, filename);
+
+    SHA256 sha256;
+
+    std::string file_hash(sha256(cal_data.data(), sizeof(struct cal_ref)*cal_data.size()));
+
+    if(!(load_cache(i, file_hash, cal_data.size()/2)))
+    {
+      std::cerr << "No cache files" <<std::endl;
+      fill_V_preset(i, cal_data);
+      set_integer_index(i);
+      save_cache(i, file_hash);
+    }
+
   }
 
   std::cout << "Done"<<std::endl;
@@ -98,6 +235,9 @@ int Phase_Attenuator_controller::fill_V_preset(int ant_num, std::vector<struct c
   for(int power_idx = dB2idx(MIN_POWER); power_idx <= dB2idx(MAX_POWER); power_idx++)
   {
     double target_power = std::pow(10, idx2dB(power_idx)/10);
+
+    V_preset[ant_num][power_idx].reserve(cal_len);
+
     for(int ph_idx = 0; ph_idx < cal_len; ph_idx++)
     {
       std::complex<double> phase_signal = phase_shifter[ph_idx].signal;
@@ -115,7 +255,7 @@ int Phase_Attenuator_controller::fill_V_preset(int ant_num, std::vector<struct c
           best_at_idx = at_idx;
         }
       }
-      
+
 
       struct cal_ref v_data;
       v_data.signal = phase_signal * attenuator[best_at_idx].signal;
@@ -159,16 +299,14 @@ int Phase_Attenuator_controller::find_matched_preset(int ant, int power, float p
 }
 
 
-int Phase_Attenuator_controller::set_integer_index(void){
-  std::cerr << "Preparing integer indexes...";
+int Phase_Attenuator_controller::set_integer_index(int ant){
   for(int power_idx = 0; power_idx < POWER_num; power_idx++){
-    for(int ant = 0; ant < ANT_num; ant++){
-      for(int i = 0; i < 360; i++){
-        index_V_preset[ant][power_idx][i] = find_matched_preset(ant, power_idx ,i);
-      }
+    for(int i = 0; i < 360; i++){
+      index_V_preset[ant][power_idx][i] = find_matched_preset(ant, power_idx ,i);
     }
   }
-  std::cout << "Done"<<std::endl;
+
+  return 0;
 }
 
 
@@ -281,7 +419,6 @@ Phase_Attenuator_controller::Phase_Attenuator_controller(float phase){
 int Phase_Attenuator_controller::init(void){
   if(load_cal_data())
     std::cout<<"Error : Loading calibration data failed"<<std::endl;
-  set_integer_index();
 
   std::fill_n(ant_power_setting, ANT_num, DEFAULT_POWER_idx);
   std::cout << ant_power_setting[0]<<std::endl;
