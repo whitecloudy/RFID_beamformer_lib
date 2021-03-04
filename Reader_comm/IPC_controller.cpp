@@ -72,10 +72,15 @@ int IPC_controller::data_send(void * buf, int buf_len, long type){
 int IPC_controller::data_recv(void * buf, int buf_len, long type){
   int n = msgrcv(receiver_id, &recv_buf, sizeof(recv_buf) - sizeof(long), type, 0);
 
+  if(recv_buf.msg_type == IPC_FIN__)
+    return -1;
+  else if (abs(type) != recv_buf.msg_type)
+    std::cerr << "WARNING : Wrong IPC msg type detected"<<std::endl;
+
 #ifdef __IPC_DEBUG__
   std::cout << "ipc data receive"<<std::endl;
-  std::cout << "flag : "<<(int)(recv_buf.msg_flag)<< ", n : "<<n<<std::endl;
-  std::cout << "return value would be " << (recv_buf.msg_flag & IPC_SYNC__) <<std::endl;
+  std::cout << "flag : "<<(int)(recv_buf.msg_type)<< ", n : "<<n<<std::endl;
+  std::cout << "return value would be " << (recv_buf.msg_type & IPC_SYNC__) <<std::endl;
 #endif
 
   memcpy(buf, recv_buf.msg_data, std::min(IO_BUF_SIZE, buf_len));
@@ -109,7 +114,7 @@ int IPC_controller::wait_sync(){
   rt = data_recv(NULL, 0, IPC_SYNC__);
 #ifdef __IPC_DEBUG__
   std::cout<<"data_recv return : "<<rt<<std::endl;
-  std::cout<<"It is supposed to be : "<<-IPC_SYNC__<<std::endl;
+  std::cout<<"It is supposed to be : "<<IPC_SYNC__<<std::endl;
 #endif
 
   send_ack();
@@ -123,6 +128,11 @@ int IPC_controller::wait_sync(){
 
 int IPC_controller::send_ack(){
   char dummy_buf[IO_BUF_SIZE] = {};
+#ifdef __IPC_DEBUG__
+  std::cout << "Send ACK" << std::endl;
+#endif
+
+
 
   if(data_send(dummy_buf, IO_BUF_SIZE, IPC_ACK__) == -1){
     std::cerr <<"ACK send error";
@@ -135,6 +145,9 @@ int IPC_controller::send_ack(){
 
 
 int IPC_controller::wait_ack(){
+#ifdef __IPC_DEBUG__
+  std::cout << "Wait ACK" << std::endl;
+#endif
 
   if(data_recv(NULL, 0, IPC_ACK__) == -1){
     std::cerr <<"ACK wait error";

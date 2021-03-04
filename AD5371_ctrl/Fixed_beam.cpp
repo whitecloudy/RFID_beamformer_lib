@@ -1,10 +1,12 @@
 #include <iostream>
 #include <string>
+#include <unistd.h>
 #include "lib/AD5371_ctrl/Phase_Attenuator_controller.hpp"
 
 int main(int argc, char * argv[]){
     Phase_Attenuator_controller pa_control(0);
 
+    /*
     int ant_quantity = std::stoi(argv[1]);
 
     for(int i = 0; i < ant_quantity; i++){
@@ -24,8 +26,21 @@ int main(int argc, char * argv[]){
         pa_control.ant_on(ant_num);
         pa_control.phase_control(ant_num, power, phase);
     }
+    */
 
-    pa_control.data_apply();
+    int ant_num = std::stoi(argv[1]);
+
+    pa_control.ant_on(ant_num);
+
+    for(int i = 0; i < 360; i+=10)
+    {
+      pa_control.phase_control(ant_num, -3, i);
+
+      pa_control.data_apply();
+      sleep(1);
+    }
+
+
     std::cout << "Waiting"<<std::endl;
     char for_waiting[128];
     std::cin >> for_waiting;

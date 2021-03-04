@@ -10,9 +10,10 @@
 #define IO_BUF_SIZE 64
 
 #define IPC_ALL__   0x00
-#define IPC_DATA__  0x01
+#define IPC_DATA__  0xFF
 #define IPC_SYNC__  0x02
 #define IPC_ACK__   0x04
+#define IPC_FIN__   0x08
 
 
 struct msg_format{
@@ -30,7 +31,7 @@ class IPC_controller{
     IPC_controller();
     ~IPC_controller();
     int data_send(void * buf, int buf_len = IO_BUF_SIZE, long type = IPC_DATA__);
-    int data_recv(void * buf, int buf_len = IO_BUF_SIZE, long type = IPC_DATA__);
+    int data_recv(void * buf, int buf_len = IO_BUF_SIZE, long type = -IPC_DATA__);
     int send_sync();
     int wait_sync();
     int send_ack();
