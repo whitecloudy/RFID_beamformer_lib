@@ -2,17 +2,12 @@
 #include <cmath>
 #include <algorithm>
 #include <complex>
+#include <global/global.hpp>
 
-#define PI (3.1415926535897)
-#define Deg2Rad(_num) (float)(_num * (PI / 180))
-#define Rad2Deg(_num) (float)(_num / PI * 180.0)
+#define _MINdB  (MIN_POWER)
+#define _MAXdB  (MAX_POWER)
 
-#define dB2Amp(_X) pow(10.0f, _X/20.0f)
-#define Amp2dB(_X) 20.0f*log10(_X)
-#define _MINdB  (-22.0)
-#define _MAXdB  (-3.0)
-
-#define _SIC_DEBUG_
+//#define _SIC_DEBUG_
 
 SIC_controller::SIC_controller(std::complex<float> input_ref){
   this->weight_cur = std::polar((float)dB2Amp(SIC_REF_POWER), Deg2Rad(SIC_REF_PHASE)); 
@@ -30,13 +25,6 @@ int SIC_controller::setCurrentAmp(std::complex<float> amp_Rx){
   std::cout<<"weight_new : "<<weight_new<<std::endl;
   std::cout<<"new dB : "<<Amp2dB(std::abs(weight_new))<<std::endl;
 #endif
-
-
-  float truedB = Amp2dB(std::abs(weight_new));
-  float realdB = std::max(std::min(round(truedB*4)/4 - 0.5, _MAXdB),_MINdB);
-
-  weight_new = weight_new / std::abs(weight_new) * (float)dB2Amp(realdB);
-
   weight_cur = weight_new;
 
 #ifdef  _SIC_DEBUG_

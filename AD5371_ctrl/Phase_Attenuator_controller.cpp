@@ -45,9 +45,6 @@ enum VOUTNUM
 #define MISC_DIR (std::string("../misc/"))
 
 
-#define PI (3.1415926535897)
-
-#define Deg2Rad(_num) (float)(_num * (PI / 180))
 
 const char PHASE[] = {ANT1_phase, ANT2_phase, ANT3_phase, ANT4_phase, ANT5_phase, ANT6_phase, ANT7_phase, ANT8_phase, ANT9_phase, ANT10_phase, ANT11_phase, ANT12_phase, ANT13_phase, ANT14_phase, ANT15_phase, ANT16_phase};
 const char ATTENUATOR[] = {ANT1_attenuator, ANT2_attenuator, ANT3_attenuator, ANT4_attenuator, ANT5_attenuator, ANT6_attenuator, ANT7_attenuator, ANT8_attenuator, ANT9_attenuator, ANT10_attenuator, ANT11_attenuator, ANT12_attenuator, ANT13_attenuator, ANT14_attenuator, ANT15_attenuator, ANT16_attenuator};
@@ -234,7 +231,7 @@ int Phase_Attenuator_controller::fill_V_preset(int ant_num, std::vector<struct c
 
   for(int power_idx = dB2idx(MIN_POWER); power_idx <= dB2idx(MAX_POWER); power_idx++)
   {
-    double target_power = std::pow(10, idx2dB(power_idx)/10);
+    double target_amp = idx2Amp(power_idx);
 
     V_preset[ant_num][power_idx].reserve(cal_len);
 
@@ -243,15 +240,15 @@ int Phase_Attenuator_controller::fill_V_preset(int ant_num, std::vector<struct c
       std::complex<double> phase_signal = phase_shifter[ph_idx].signal;
 
       int best_at_idx = 0;
-      double best_power = 99999999.0;
+      double best_amp = 99999999.0;
 
       int at_idx = 0;
       for(int at_idx = 0; at_idx < cal_len; at_idx++)
       {
-        double cur_power = std::abs(std::norm(phase_signal * attenuator[at_idx].signal) - target_power);
-        if(best_power > cur_power)
+        double cur_amp = std::abs(std::abs(phase_signal * attenuator[at_idx].signal) - target_amp);
+        if(best_amp > cur_amp)
         {
-          best_power = cur_power;
+          best_amp = cur_amp;
           best_at_idx = at_idx;
         }
       }
