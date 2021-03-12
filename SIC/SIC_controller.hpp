@@ -4,7 +4,7 @@
 #include <iostream>
 #include <complex>
 
-#define SIC_REF_POWER (-3.0)
+#define SIC_REF_POWER (-10.0)
 #define SIC_REF_PHASE 0
 
 class SIC_controller{

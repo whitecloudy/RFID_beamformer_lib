@@ -22,7 +22,7 @@ int SIC_controller::setCurrentAmp(std::complex<float> amp_Rx){
 #ifdef  _SIC_DEBUG_
   std::cout<<"ANT amp : "<<amp_Ant<<std::endl;
   std::cout<<"SIC channel : "<<SIC_cha<<std::endl;
-  std::cout<<"weight_cur : "<<weight_new<<std::endl;
+  std::cout<<"weight_cur : "<<weight_cur<<std::endl;
   std::cout<<"new dB : "<<Amp2dB(std::abs(weight_cur))<<std::endl;
   std::cout<<"phase : "<<Rad2Deg(std::arg(weight_cur))<<std::endl;
   std::cout<<"Expected : "<<amp_Ant + weight_cur*SIC_cha<<std::endl;
@@ -36,7 +36,7 @@ std::complex<float> SIC_controller::getWeight(void){
 }
 
 float SIC_controller::getPower(void){
-  return Amp2dB(std::abs(weight_cur));
+  return Amp2dB(std::abs(weight_cur) + 0.01);
 }
 
 float SIC_controller::getPhase(void){
