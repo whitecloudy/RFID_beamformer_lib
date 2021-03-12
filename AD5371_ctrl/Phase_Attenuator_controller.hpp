@@ -7,10 +7,11 @@
 #include "csv/csv.h"
 #include <complex>
 #include <vector>
+#include <algorithm>
 
 #define POWER_res       (0.002)
 #define POWER_num       ((unsigned int)((MAX_POWER_amp - MIN_POWER_amp)/POWER_res) + 1)
-#define Amp2idx(_power) (unsigned int)((_power - MIN_POWER_amp)/POWER_res)
+#define Amp2idx(_power) (std::min(std::max((unsigned int)((_power - MIN_POWER_amp)/POWER_res), (unsigned int)0), POWER_num - 1))
 #define idx2Amp(_idx)   (double)(_idx*POWER_res + MIN_POWER_amp)
 #define dB2idx(_dB)     (Amp2idx(dB2Amp(_dB)))
 #define idx2dB(_idx)    (Amp2dB(idx2Amp(_idx))
