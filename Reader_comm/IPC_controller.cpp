@@ -126,13 +126,11 @@ int IPC_controller::wait_sync(){
 
 
 
-int IPC_controller::send_ack(){
-  char dummy_buf[IO_BUF_SIZE] = {};
+int IPC_controller::send_ack(int data){
+  char dummy_buf[IO_BUF_SIZE] = {(char)data};
 #ifdef __IPC_DEBUG__
   std::cout << "Send ACK" << std::endl;
 #endif
-
-
 
   if(data_send(dummy_buf, IO_BUF_SIZE, IPC_ACK__) == -1){
     std::cerr <<"ACK send error";
