@@ -6,6 +6,7 @@
 
 #define _MINdB  (MIN_POWER)
 #define _MAXdB  (MAX_POWER)
+#define _TARGET_POWER (std::complex<float>(0.01, 0))
 
 //#define _SIC_DEBUG_
 
@@ -15,9 +16,8 @@ SIC_controller::SIC_controller(std::complex<float> input_ref){
 }
 
 int SIC_controller::setCurrentAmp(std::complex<float> amp_Rx){
-  std::complex<float> amp_Ant = amp_Rx - SIC_cha * weight_cur;
-  weight_cur = -amp_Ant/SIC_cha;
-
+  std::complex<float> amp_SI = amp_Rx - SIC_cha * weight_cur;
+  weight_cur = (_TARGET_POWER - amp_SI)/SIC_cha;
   
 #ifdef  _SIC_DEBUG_
   std::cout<<"ANT amp : "<<amp_Ant<<std::endl;
@@ -36,7 +36,7 @@ std::complex<float> SIC_controller::getWeight(void){
 }
 
 float SIC_controller::getPower(void){
-  return Amp2dB(std::abs(weight_cur) + 0.01);
+  return Amp2dB(std::abs(weight_cur));
 }
 
 float SIC_controller::getPhase(void){
