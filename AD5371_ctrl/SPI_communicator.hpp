@@ -24,7 +24,17 @@ class SPI_communicator{
   private:
     int sockfd = 0; 
     struct sockaddr_in     servaddr, cliaddr;
-    unsigned char buf[MAXIMUM_DATA];
+
+#define NORMAL  (0x00)
+#define FIN     (0x01)
+
+    
+    struct buf_struct
+    {
+      uint8_t flag = NORMAL;
+      uint8_t data[MAXIMUM_DATA];
+    } buf;
+
     unsigned int buf_count = 0;
   public:
     /*

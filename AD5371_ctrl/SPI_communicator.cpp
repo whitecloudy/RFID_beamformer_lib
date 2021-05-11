@@ -40,7 +40,8 @@ SPI_communicator::SPI_communicator(){
 }
 
 SPI_communicator::~SPI_communicator(){
-  sendto(sockfd,buf,0,MSG_CONFIRM,(const struct sockaddr *)&servaddr, sizeof(servaddr));
+  buf.flag = FIN;
+  sendto(sockfd,&buf,sizeof(uint8_t),MSG_CONFIRM,(const struct sockaddr *)&servaddr, sizeof(servaddr));
   close(sockfd);
 }
 
@@ -48,7 +49,7 @@ SPI_communicator::~SPI_communicator(){
 
 
 int SPI_communicator::transmit_cmd(const unsigned char * spi_bytes){
-  memcpy(&(buf[buf_count*FRAME_SIZE]),spi_bytes,3);
+  memcpy(&(buf.data[buf_count*FRAME_SIZE]),spi_bytes,3);
   buf_count++;
 
 //  int result = sendto(sockfd, buffer, 4, MSG_CONFIRM, (const struct sockaddr *)&servaddr, sizeof(servaddr)); 
@@ -58,7 +59,8 @@ int SPI_communicator::transmit_cmd(const unsigned char * spi_bytes){
 
 
 int SPI_communicator::data_apply(){
-  int result = sendto(sockfd, buf, buf_count*FRAME_SIZE, MSG_CONFIRM, (const struct sockaddr *)&servaddr, sizeof(servaddr));
+ // buf.flag = NORMAL;
+  int result = sendto(sockfd, &buf, sizeof(uint8_t) + buf_count*FRAME_SIZE, MSG_CONFIRM, (const struct sockaddr *)&servaddr, sizeof(servaddr));
 
   if(result < 0){
     std::cerr<<"send SPI data error"<<std::endl;
@@ -67,11 +69,13 @@ int SPI_communicator::data_apply(){
 
   int slen = sizeof(struct sockaddr_in);
 
-  int n = recvfrom(sockfd, buf, MAXIMUM_DATA, MSG_WAITALL, (struct sockaddr *) &servaddr, (socklen_t*)&slen);
+  int return_d = 0;
+
+  int n = recvfrom(sockfd, &return_d, sizeof(int), MSG_WAITALL, (struct sockaddr *) &servaddr, (socklen_t*)&slen);
 
   std::cout<<n<<std::endl;
   buf_count = 0;
-  memset(buf, 0, MAXIMUM_DATA);
+  memset(buf.data, 0, MAXIMUM_DATA);
   std::cout<<"data applied"<<std::endl;
 
   return 0;
