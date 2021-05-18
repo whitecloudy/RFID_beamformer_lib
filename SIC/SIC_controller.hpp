@@ -11,6 +11,9 @@ class SIC_controller{
   private:
     std::complex<float> SIC_cha;
     std::complex<float> weight_cur;
+    std::complex<float> amp_SI;
+
+    std::complex<float> target_power = std::complex<float>(0.0, 0.0);
 
   public:
     SIC_controller(std::complex<float>);
@@ -20,6 +23,7 @@ class SIC_controller{
     float getPower(void);
     int setPhase(float);
     int setPower(float);    
+    int setTargetPower(std::complex<float>);
 
 };
 
