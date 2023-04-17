@@ -21,7 +21,7 @@ SPI_communicator::SPI_communicator(){
 
   servaddr.sin_family = AF_INET; 
   servaddr.sin_port = htons(PORT); 
-  servaddr.sin_addr.s_addr = inet_addr("192.168.1.3"); 
+  servaddr.sin_addr.s_addr = inet_addr("192.168.2.3"); 
 
   cliaddr.sin_family = AF_INET;
   cliaddr.sin_port = htons(PORT);

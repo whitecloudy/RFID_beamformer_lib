@@ -7,7 +7,7 @@
 
 #define PATH "/tmp"
 
-#define IO_BUF_SIZE 64
+#define IO_BUF_SIZE 256
 
 #define IPC_ALL__   0x00
 #define IPC_DATA__  0xFF
